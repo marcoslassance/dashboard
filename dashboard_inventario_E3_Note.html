@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Qualidade Inventário E3+Note</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0e0f11;
+    --bg2: #16181c;
+    --bg3: #1e2128;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text1: #f0f0ef;
+    --text2: #9a9b9e;
+    --text3: #5e5f63;
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --purple: #a78bfa;
+    --coral: #f87171;
+    --teal: #2dd4bf;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text1);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Header */
+  .header {
+    padding: 28px 36px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .header-left h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    color: var(--text1);
+  }
+  .header-left p {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 3px;
+    font-family: 'DM Mono', monospace;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(59,130,246,0.12);
+    color: var(--accent2);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(59,130,246,0.2);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Filters bar */
+  .filters-bar {
+    padding: 14px 36px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: var(--bg2);
+  }
+  .filter-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    white-space: nowrap;
+  }
+  .filter-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent2); }
+  .filter-btn.active {
+    background: rgba(59,130,246,0.15);
+    border-color: var(--accent);
+    color: var(--accent2);
+    font-weight: 500;
+  }
+  .filter-sep { width: 1px; height: 20px; background: var(--border2); flex-shrink: 0; }
+  .reset-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .reset-btn:hover { color: var(--text1); border-color: var(--border2); }
+
+  /* Main layout */
+  .main { padding: 24px 36px; }
+
+  /* KPI row */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .kpi-card:hover { border-color: var(--border2); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .kpi-card.blue::before { background: var(--accent); }
+  .kpi-card.green::before { background: var(--green); }
+  .kpi-card.amber::before { background: var(--amber); }
+  .kpi-card.purple::before { background: var(--purple); }
+  .kpi-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 8px;
+  }
+  .kpi-val {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -1px;
+    color: var(--text1);
+    font-family: 'DM Mono', monospace;
+    transition: all .3s;
+  }
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Charts grid */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+  .chart-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text1);
+    letter-spacing: -0.2px;
+  }
+  .chart-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+    font-family: 'DM Mono', monospace;
+  }
+  .legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .leg {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text2);
+  }
+  .leg-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th:not(:first-child) { text-align: right; }
+  tbody tr { transition: background .1s; }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+  }
+  tbody td:first-child { color: var(--text1); font-family: 'DM Sans', sans-serif; font-size: 12px; }
+  tbody td:not(:first-child) { text-align: right; }
+  .bar-cell { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .mini-bar { height: 4px; border-radius: 2px; background: var(--accent); opacity: 0.7; transition: width .4s; }
+
+  /* Pct pill */
+  .pct-pill {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+  }
+  .pct-high { background: rgba(34,197,94,.12); color: #4ade80; }
+  .pct-mid  { background: rgba(59,130,246,.12); color: #60a5fa; }
+  .pct-low  { background: rgba(245,158,11,.12); color: #fbbf24; }
+
+  /* Footer */
+  .footer {
+    padding: 16px 36px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Qualidade Inventário — E3 + Note</h1>
+    <p>Resumo das tabelas dinâmicas · Atualizado em 25/05/2025</p>
+  </div>
+  <span class="badge">● LIVE</span>
+</div>
+
+<div class="filters-bar">
+  <span class="filter-label">Área</span>
+  <div class="filter-group" id="dept-filters"></div>
+  <div class="filter-sep"></div>
+  <span class="filter-label">Plano</span>
+  <div class="filter-group">
+    <button class="filter-btn active" data-plan="all">Todos</button>
+    <button class="filter-btn" data-plan="e3">E3</button>
+    <button class="filter-btn" data-plan="e1">E1</button>
+  </div>
+  <button class="reset-btn" id="reset-btn">↺ Resetar</button>
+</div>
+
+<div class="main">
+  <div class="kpi-row">
+    <div class="kpi-card blue">
+      <div class="kpi-label">Usuários selecionados</div>
+      <div class="kpi-val" id="kpi-total">15.356</div>
+      <div class="kpi-sub" id="kpi-total-sub">100% do inventário</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Office 365 E3</div>
+      <div class="kpi-val" id="kpi-e3">11.649</div>
+      <div class="kpi-sub" id="kpi-e3-sub">75,9% do total</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-label">Office 365 E1</div>
+      <div class="kpi-val" id="kpi-e1">3.707</div>
+      <div class="kpi-sub" id="kpi-e1-sub">24,1% do total</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Licenças extras (Note)</div>
+      <div class="kpi-val" id="kpi-note">6.043</div>
+      <div class="kpi-sub" id="kpi-note-sub">Total de licenças adicionais</div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">E1 vs E3 por área</div>
+          <div class="chart-sub" id="chart1-sub">Todas as áreas</div>
+        </div>
+      </div>
+      <div class="legend-row">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>E3</span>
+        <span class="leg"><span class="leg-dot" style="background:#93c5fd"></span>E1</span>
+      </div>
+      <div style="position:relative;width:100%;height:300px">
+        <canvas id="c1" role="img" aria-label="E1 vs E3 por área"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Perfil de computador (E3)</div>
+          <div class="chart-sub" id="chart2-sub">Todas as áreas</div>
+        </div>
+      </div>
+      <div class="legend-row">
+        <span class="leg"><span class="leg-dot" style="background:#3b82f6"></span>Padrão</span>
+        <span class="leg"><span class="leg-dot" style="background:#2dd4bf"></span>Apple</span>
+        <span class="leg"><span class="leg-dot" style="background:#a78bfa"></span>Especialista</span>
+        <span class="leg"><span class="leg-dot" style="background:#f59e0b"></span>Plus</span>
+        <span class="leg"><span class="leg-dot" style="background:#f87171"></span>Ultrabook</span>
+      </div>
+      <div style="position:relative;width:100%;height:300px">
+        <canvas id="c2" role="img" aria-label="Perfil de computador por área"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card full">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Top licenças extras (Note) — usuários E3</div>
+          <div class="chart-sub" id="chart3-sub">Todas as áreas · Top 15</div>
+        </div>
+      </div>
+      <div style="position:relative;width:100%;height:320px">
+        <canvas id="c3" role="img" aria-label="Top licenças extras por volume"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Detalhamento por área</div>
+        <div class="chart-sub">E1 / E3 / Total · proporção E3</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Área</th>
+            <th>E1</th>
+            <th>E3</th>
+            <th>Total</th>
+            <th>% E3</th>
+            <th>Volume</th>
+          </tr>
+        </thead>
+        <tbody id="dept-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>Dashboard — Qualidade Inventário E3+Note · Globo</span>
+  <span>25/05/2025</span>
+</div>
+
+<script>
+const DATA = {
+  depts: [
+    {dept:'TECNOLOGIA',e1:1990,e3:3970,total:5960,padrao:1363,apple:1252,especialista:201,plus:65,ultrabook:9,note:2729},
+    {dept:'FINANÇAS JUR. E INFRA.',e1:566,e3:1552,total:2118,padrao:1307,apple:4,especialista:24,plus:19,ultrabook:5,note:902},
+    {dept:'ESTUDIOS GLOBO',e1:422,e3:1451,total:1873,padrao:1042,apple:18,especialista:118,plus:6,ultrabook:1,note:541},
+    {dept:'JORNALISMO',e1:513,e3:998,total:1511,padrao:369,apple:12,especialista:49,plus:5,ultrabook:10,note:87},
+    {dept:'NEG. INT. PUBLICIDADE',e1:9,e3:1056,total:1065,padrao:925,apple:20,especialista:32,plus:9,ultrabook:10,note:450},
+    {dept:'PRODUTOS DIGITAIS',e1:21,e3:806,total:827,padrao:610,apple:81,especialista:66,plus:14,ultrabook:3,note:544},
+    {dept:'ESPORTE',e1:136,e3:648,total:784,padrao:527,apple:8,especialista:46,plus:3,ultrabook:7,note:100},
+    {dept:'RECURSOS HUMANOS',e1:29,e3:319,total:348,padrao:279,apple:4,especialista:10,plus:5,ultrabook:6,note:283},
+    {dept:'MARCA E COMUNICAÇÃO',e1:8,e3:321,total:329,padrao:218,apple:76,especialista:4,plus:0,ultrabook:4,note:183},
+    {dept:'TV GLOBO',e1:11,e3:309,total:320,padrao:221,apple:25,especialista:12,plus:1,ultrabook:6,note:119},
+    {dept:'DIREITOS',e1:0,e3:110,total:110,padrao:104,apple:1,especialista:0,plus:1,ultrabook:2,note:33},
+    {dept:'PARCERIAS ESTRATÉGICAS',e1:0,e3:45,total:45,padrao:44,apple:0,especialista:0,plus:0,ultrabook:1,note:23},
+    {dept:'EST. CORP. GLOBO',e1:0,e3:25,total:25,padrao:23,apple:1,especialista:0,plus:0,ultrabook:1,note:30},
+    {dept:'RELAÇÕES INST.',e1:1,e3:20,total:21,padrao:10,apple:1,especialista:1,plus:1,ultrabook:4,note:6},
+    {dept:'VIU AGENCIAMENTO',e1:0,e3:12,total:12,padrao:9,apple:1,especialista:0,plus:1,ultrabook:0,note:5},
+  ],
+  licenses: [
+    ['Microsoft Power BI Pro',1217],['Slack Pro Plan',987],['Microsoft Teams Premium',745],
+    ['Microsoft 365 Copilot',615],['Miro Enterprise',507],['Adobe Creative Cloud All Apps PRO',438],
+    ['Monday Professional',215],['Adobe Photoshop Single App PRO',163],['Autodesk AEC Collection',152],
+    ['ChatGPT Enterprise',128],['Adobe Acrobat Pro DC',127],['Adobe Premiere Pro',122],
+    ['Figma Full Seat',90],['Monday Enterprise',84],['Adobe Illustrator Single App PRO',82],
+  ]
+};
+
+const GRAND_TOTAL = DATA.depts.reduce((a,d)=>a+d.total,0);
+const GRAND_NOTE  = DATA.depts.reduce((a,d)=>a+d.note,0);
+
+let selectedDepts = new Set(DATA.depts.map(d=>d.dept));
+let selectedPlan  = 'all';
+
+// Build dept filter buttons
+const deptFilters = document.getElementById('dept-filters');
+DATA.depts.forEach(d => {
+  const btn = document.createElement('button');
+  btn.className = 'filter-btn active';
+  btn.dataset.dept = d.dept;
+  btn.textContent = d.dept.length > 20 ? d.dept.slice(0,18)+'…' : d.dept;
+  btn.title = d.dept;
+  btn.addEventListener('click', () => toggleDept(d.dept, btn));
+  deptFilters.appendChild(btn);
+});
+
+// Plan filter
+document.querySelectorAll('[data-plan]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-plan]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedPlan = btn.dataset.plan;
+    update();
+  });
+});
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  selectedDepts = new Set(DATA.depts.map(d=>d.dept));
+  selectedPlan = 'all';
+  document.querySelectorAll('[data-dept]').forEach(b => b.classList.add('active'));
+  document.querySelectorAll('[data-plan]').forEach(b => {
+    b.classList.toggle('active', b.dataset.plan === 'all');
+  });
+  update();
+});
+
+function toggleDept(dept, btn) {
+  if (selectedDepts.has(dept)) {
+    if (selectedDepts.size === 1) return;
+    selectedDepts.delete(dept);
+    btn.classList.remove('active');
+  } else {
+    selectedDepts.add(dept);
+    btn.classList.add('active');
+  }
+  update();
+}
+
+function filtered() {
+  return DATA.depts.filter(d => selectedDepts.has(d.dept));
+}
+
+function fmt(n) { return n.toLocaleString('pt-BR'); }
+function pct(a,b) { return b > 0 ? (a/b*100).toFixed(1) : '0.0'; }
+
+// Chart defaults
+const gridC = 'rgba(255,255,255,0.06)';
+const txtC  = 'rgba(255,255,255,0.4)';
+const baseScales = {
+  x: { ticks:{color:txtC,font:{size:10}}, grid:{color:gridC} },
+  y: { ticks:{color:txtC,font:{size:10}}, grid:{color:gridC} }
+};
+
+let chart1, chart2, chart3;
+
+function buildCharts() {
+  const rows = filtered();
+
+  // Chart 1 — E1 vs E3
+  const labels1 = rows.map(r => r.dept);
+  const e3Data  = rows.map(r => selectedPlan==='e1' ? 0 : r.e3);
+  const e1Data  = rows.map(r => selectedPlan==='e3' ? 0 : r.e1);
+
+  if (!chart1) {
+    chart1 = new Chart(document.getElementById('c1'), {
+      type: 'bar',
+      data: {
+        labels: labels1,
+        datasets: [
+          {label:'E3', data:e3Data, backgroundColor:'#3b82f6', borderRadius:3},
+          {label:'E1', data:e1Data, backgroundColor:'#93c5fd', borderRadius:3}
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        indexAxis:'y',
+        plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},
+        scales:{
+          x:{stacked:true,ticks:{color:txtC,font:{size:10}},grid:{color:gridC}},
+          y:{stacked:true,ticks:{color:txtC,font:{size:9}},grid:{display:false}}
+        }
+      }
+    });
+  } else {
+    chart1.data.labels = labels1;
+    chart1.data.datasets[0].data = e3Data;
+    chart1.data.datasets[1].data = e1Data;
+    chart1.update('active');
+  }
+
+  // Chart 2 — Perfil computador
+  const labels2 = rows.map(r => r.dept);
+  if (!chart2) {
+    chart2 = new Chart(document.getElementById('c2'), {
+      type: 'bar',
+      data: {
+        labels: labels2,
+        datasets: [
+          {label:'Padrão',     data:rows.map(r=>r.padrao),     backgroundColor:'#3b82f6', borderRadius:2},
+          {label:'Apple',      data:rows.map(r=>r.apple),      backgroundColor:'#2dd4bf', borderRadius:2},
+          {label:'Especialista',data:rows.map(r=>r.especialista),backgroundColor:'#a78bfa', borderRadius:2},
+          {label:'Plus',       data:rows.map(r=>r.plus),       backgroundColor:'#f59e0b', borderRadius:2},
+          {label:'Ultrabook',  data:rows.map(r=>r.ultrabook),  backgroundColor:'#f87171', borderRadius:2},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        indexAxis:'y',
+        plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},
+        scales:{
+          x:{stacked:true,ticks:{color:txtC,font:{size:10}},grid:{color:gridC}},
+          y:{stacked:true,ticks:{color:txtC,font:{size:9}},grid:{display:false}}
+        }
+      }
+    });
+  } else {
+    chart2.data.labels = labels2;
+    ['padrao','apple','especialista','plus','ultrabook'].forEach((k,i) => {
+      chart2.data.datasets[i].data = rows.map(r=>r[k]);
+    });
+    chart2.update('active');
+  }
+
+  // Chart 3 — licenses (static, show top 15)
+  if (!chart3) {
+    chart3 = new Chart(document.getElementById('c3'), {
+      type: 'bar',
+      data: {
+        labels: DATA.licenses.map(r=>r[0]),
+        datasets: [{
+          label:'Usuários',
+          data: DATA.licenses.map(r=>r[1]),
+          backgroundColor: DATA.licenses.map((_,i)=>`hsl(${210+i*8},70%,${55-i*1}%)`),
+          borderRadius: 3
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        indexAxis:'y',
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.raw)} usuários`}}},
+        scales:{
+          x:{ticks:{color:txtC,font:{size:10}},grid:{color:gridC}},
+          y:{ticks:{color:txtC,font:{size:10}},grid:{display:false}}
+        }
+      }
+    });
+  }
+}
+
+function updateKPIs() {
+  const rows = filtered();
+  let totE1=0,totE3=0,totAll=0,totNote=0;
+  rows.forEach(r=>{
+    totE3  += selectedPlan==='e1' ? 0 : r.e3;
+    totE1  += selectedPlan==='e3' ? 0 : r.e1;
+    totAll += (selectedPlan==='e3' ? r.e3 : selectedPlan==='e1' ? r.e1 : r.total);
+    totNote += r.note;
+  });
+  document.getElementById('kpi-total').textContent = fmt(totAll);
+  document.getElementById('kpi-total-sub').textContent = pct(totAll,GRAND_TOTAL)+'% do inventário';
+  document.getElementById('kpi-e3').textContent = fmt(totE3);
+  document.getElementById('kpi-e3-sub').textContent = pct(totE3,totAll)+'% do selecionado';
+  document.getElementById('kpi-e1').textContent = fmt(totE1);
+  document.getElementById('kpi-e1-sub').textContent = pct(totE1,totAll)+'% do selecionado';
+  document.getElementById('kpi-note').textContent = fmt(totNote);
+  document.getElementById('kpi-note-sub').textContent = pct(totNote,GRAND_NOTE)+'% do total';
+
+  const n = rows.length;
+  const suf = n === DATA.depts.length ? 'Todas as áreas' : `${n} área${n>1?'s':''} selecionada${n>1?'s':''}`;
+  ['chart1-sub','chart2-sub','chart3-sub'].forEach(id=>{
+    document.getElementById(id).textContent = suf;
+  });
+}
+
+function updateTable() {
+  const rows = filtered().slice().sort((a,b)=>b.total-a.total);
+  const maxTotal = rows[0]?.total || 1;
+  const tbody = document.getElementById('dept-table');
+  tbody.innerHTML = rows.map(r => {
+    const p = parseFloat(pct(r.e3,r.total));
+    const pillClass = p>=80 ? 'pct-high' : p>=50 ? 'pct-mid' : 'pct-low';
+    const barW = Math.round(r.total/maxTotal*120);
+    return `<tr>
+      <td>${r.dept}</td>
+      <td>${fmt(r.e1)}</td>
+      <td>${fmt(r.e3)}</td>
+      <td>${fmt(r.total)}</td>
+      <td><span class="pct-pill ${pillClass}">${p.toFixed(1)}%</span></td>
+      <td><div class="bar-cell"><div class="mini-bar" style="width:${barW}px"></div></div></td>
+    </tr>`;
+  }).join('');
+}
+
+function update() {
+  updateKPIs();
+  buildCharts();
+  updateTable();
+}
+
+update();
+</script>
+</body>
+</html>
